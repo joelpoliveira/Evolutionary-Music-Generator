@@ -27,7 +27,6 @@ class Generator:
     Class Generator - Main class to access methods 
                         for generation of chromosomes 
                         or the corresponding phenotype
-
     Parameters: min_note -> Integer MIDI value for the lowest possible note. 
                             Kept as the attribute "_MIN_NOTE".
                 max_note -> Integer MIDI value for the highest possible note
@@ -48,7 +47,6 @@ class Generator:
         """
         Each note distances in scale from itself by twelve digits (in MIDI).
         For example: C1 is 24 and C2 is 36)
-
         This function randomly generates a 'base' note between MIN_NOTE and MAX_NOTE. 
         From this base note, the other notes can be selected by relative distance.
         """
