@@ -20,7 +20,7 @@ Chromosome = NewType("Chromosome", list[
 ])
 Population = NewType("Population", list[Chromosome])
 Fitness = NewType("Fitness", float)
-Population_Fitness = NewType("Population_and_Fitness", list[ tuple[ Chromosome, Fitness ] ])
+Population_Fitness = NewType("Population_and_Fitness", list[ Tuple[ Chromosome, Fitness ] ])
 
 class Generator:
     """
@@ -46,7 +46,11 @@ class Generator:
     
     def generate_random_pitch(self) -> Note:
         """
-        
+        Each note distances in scale from itself by twelve digits (in MIDI).
+        For example: C1 is 24 and C2 is 36)
+
+        This function randomly generates a 'base' note between MIN_NOTE and MAX_NOTE. 
+        From this base note, the other notes can be selected by relative distance.
         """
         pitch_base = list(
                 range(self._MIN_NOTE, self._MAX_NOTE, 12)
@@ -56,8 +60,12 @@ class Generator:
         return pitch
     
     def generate_random_note(self) -> Note:
+        """
+        A random note from C-major scale is selected (in the range 1 to 12).
+        Given a base note (see 'generate_random_pitch'), the actual note is the
+        increment of the base note with the firstly selected note.
+        """
         pitch = self.generate_random_pitch()
-        
         # only notes from C-major scale
         notes = [1, 3, 5, 6, 8, 10, 12]
         note = choice(notes) + pitch
@@ -116,6 +124,9 @@ class Generator:
 #     ).midi_to_audio(file_name+".mid", file_name + ".wav")
 
 def split_chromosome(chromosome):
+    """
+    Separates the chromossome in 'Operator Probability', 'Mutation Probability' and 'Notes'
+    """
     return chromosome[0], chromosome[1], chromosome[2:]
 
 
@@ -123,7 +134,10 @@ def tournament(
     population_fitness: Population_Fitness, 
     k: int 
 ) -> Chromosome:
-
+    """
+    Given a list of pairs (chromossome, fitness), performs a K-Tournament Selection,
+    ordering the fitness in ascending order.
+    """
     indexes = [i for i in range(len(population_fitness))]
     selected_indexes = list(np.random.choice(
         indexes, 
@@ -142,7 +156,9 @@ def truncate(
     population_fitness: Population_Fitness,
     N : int
 ) -> Population_Fitness:
-
+    """
+    Given a list of pairs (chromossome, fitness), removes the 10% elements with worse performance
+    """
     to_remove = max(N//10, 1)
     population_fitness = population_fitness[:-to_remove]
     
@@ -153,7 +169,10 @@ def elitism(
     population_fitness: Population_Fitness,
     N: int
 ) -> Population:
-
+    """
+    Given a list of pairs (chromossome, fitness), selects the 10% elements with better results,
+    in order to keep them in the next generation. 
+    """
     to_keep = max(N//10, 1)
     new_population = population_fitness[:to_keep]
     
@@ -161,6 +180,16 @@ def elitism(
 
 
 def selection(population_fitness: Population_Fitness) -> Population:
+    """
+    Given a list of pairs (chromossome, fitness), the selection method creates
+    the new generation. Keeps best elements with 'Elitism' and generates new 
+    population using one of the following operators per element:
+        1. Mutation
+        2. Crossover 
+        3. Duplication
+        4. Inversion
+    Each operator as a probability of being selected.  
+    """
     N = len(population_fitness)
 
     #TODO calculate fitness in main
@@ -174,7 +203,6 @@ def selection(population_fitness: Population_Fitness) -> Population:
     while len(new_population) < N:
         chromosome = tournament(population_fitness, 2)
         
-        probs_op, probs_mut, notes = split_chromosome(chromosome)
         operator = select_operator(chromosome, k_left)
         new_chromosomes = operator(chromosome, population_fitness, N) 
 
@@ -188,6 +216,10 @@ def select_operator(
     chromosome: Chromosome,
     k_left: int
 ) -> Callable:
+    """
+    Given the 'Operations Probabilty' of the selected 'Chromosome'
+    randomly selects the operation to be performed.
+    """
     prob_op, _, _ = split_chromosome(chromosome)
     if k_left>=2:
         operator_index = np.random.choice( range(4), size=1, p=prob_op )[0]
@@ -217,6 +249,12 @@ def select_operator(
 
 
 def mutation(chromosome: Chromosome, *args) -> list[Chromosome]:
+    """
+    Mutation Operator. 
+    Given the 'Mutation Probabilities' of the Chromossome,a mutation 
+    rule is selected randomly. 
+    Then the selected mutation method is applied to the chromossome.
+    """
     mutation_rules: list[Callable] = [
         repeat, split, arpeggiate, leap,
         upper_neighbor, lower_neighbor,
@@ -236,6 +274,11 @@ def mutation(chromosome: Chromosome, *args) -> list[Chromosome]:
 
 
 def repeat(chromosome: Chromosome) -> Chromosome:
+    """
+    Repeat Mutation Rule. 
+    Randomly selects a note. That note is repeated 
+    with the same duration.
+    """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     n = random.choice(range(len(notes)))
     
@@ -245,6 +288,11 @@ def repeat(chromosome: Chromosome) -> Chromosome:
 
 
 def split(chromosome: Chromosome) -> Chromosome:
+    """
+    Split Mutation Rule.
+    Randomly selects a note. That note is split in two
+    equal notes (each with half the duration of the original).
+    """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     n = random.choice(range(len(notes)))
     
@@ -260,6 +308,15 @@ def split(chromosome: Chromosome) -> Chromosome:
 
 
 def arpeggiate(chromosome: Chromosome, generator: Generator) -> Chromosome:
+    """
+    Arpeggiate Mutation Rule.
+    Randomly selects a note. That note is split in two notes
+    with the duration of the original note. 
+    The first note keeps it's pitch, the second note is transformed
+    into a third (4 half-tones above) or a fith (7 half-tones above) 
+    of the original pitch.
+    Pitch is the numerical value of the note.
+    """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     n = random.choice(range(len(notes)))
     
@@ -279,6 +336,11 @@ def leap(
     chromosome: Chromosome, 
     generator: Generator
 ) -> Chromosome:
+    """
+    Leap Mutation Rule.
+    Randomly Selects a note. That note pitch is swaped to another
+    note in the respective range (MIN_NOTE, MAX_NOTE).
+    """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     n = random.choice(range(len(notes)))
     
@@ -293,6 +355,10 @@ def leap(
 
 
 def get_pairs(notes: list[Note]) -> list[int]:
+    """
+    Checks on which positions there are two sequential repeated notes.
+    Returns an array with those indexes.
+    """
     is_consecutive = []
     for i in range(len(notes)-1):
         _, note_a = notes[i]
@@ -304,6 +370,10 @@ def get_pairs(notes: list[Note]) -> list[int]:
 
 
 def diatonic_upper_step_size(note: Note) -> int:
+    """
+    Given a note, checks wheter the next note in the diatonic scale 
+    is half-step or a whole-step above.
+    """
     if note%12 in (0, 2, 5, 7, 9):
         return 2
     return 1
@@ -313,7 +383,11 @@ def upper_neighbor(
     chromosome: Chromosome, 
     generator: Generator
 ) -> Chromosome:
-
+    """
+    Upper Neighbor Mutation Rule.
+    Randomly selects a position where the same note is sequentially repeated.
+    The second note is transposed to one diatonic scale step above itself.
+    """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     
     is_consecutive = get_pairs(notes)
@@ -332,6 +406,10 @@ def upper_neighbor(
 
 
 def diatonic_lower_step_size(note: Note) -> int:
+    """
+    Given a note, checks wheter the previous note in the diatonic scale 
+    is half-step or a whole-step below.
+    """
     if note%12 in (0, 5):
         return 1
     return 2
@@ -341,6 +419,11 @@ def lower_neighbor(
     chromosome: Chromosome,
     generator: Generator
 ) -> Chromosome:
+    """
+    Lower Neighbor Mutation Rule.
+    Randomly selects a position where the same note is sequentially repeated.
+    The second note is transposed to one diatonic scale step below itself.
+    """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
 
     is_consecutive = get_pairs(notes)
@@ -359,6 +442,11 @@ def lower_neighbor(
 
 
 def anticipation(chromosome: Chromosome) -> Chromosome:
+    """
+    Anticipation Mutation Rule.
+    Randomly Selects a note. That note is split into two notes.
+    The duration of the first is shorter than the second by the ratio 1:3.
+    """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     n = random.choice(range(len(notes)))
     
@@ -372,6 +460,11 @@ def anticipation(chromosome: Chromosome) -> Chromosome:
 
 
 def delay(chromosome: Chromosome) -> Chromosome:
+    """
+    Delay Mutation Rule.
+    Randomly Selects a note. That note is split into two notes.
+    The duration of the first is longer than the second by the ratio 3:1.
+    """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     n = random.choice(range(len(notes)))
     
@@ -385,6 +478,15 @@ def delay(chromosome: Chromosome) -> Chromosome:
 
 
 def passing_tone(chromosome: Chromosome) -> Chromosome:
+    """
+    Passing Tone Mutation Rule.
+    Randomly selects a pair of consecutive notes.
+    New notes are added in between them creating a stepwise motion
+    to connect them.
+    The implementation uses diatonic neighbors in the connection.
+    If the first note is higher than the second - Downward scalar motion.
+    If the first note is lower than the second - Upward scalar motion.
+    """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     n = random.choice( range( len( notes ) - 1 ) )
     
@@ -412,6 +514,10 @@ def passing_tone(chromosome: Chromosome) -> Chromosome:
 
 
 def delete_note(chromosome: Chromosome) -> Chromosome:
+    """
+    Delete Mutation Rule.
+    Randomly Selects a note. That note is deleted.
+    """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     n = random.choice(range(len(notes)))
     
@@ -423,6 +529,12 @@ def delete_note(chromosome: Chromosome) -> Chromosome:
 
 
 def merge_note(chromosome):
+    """
+    Merge Note Mutation Rule.
+    Randomly selects a position where the same note is sequentially repeated.
+    The notes are merged into a single note with the duration being the sum of
+    both notes duration. The maximum duration that the note can have is 8.
+    """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     is_consecutive = get_pairs(notes)
     
@@ -458,6 +570,11 @@ def crossover(
     population_fitness: Population_Fitness,
     N: int 
 ) -> list[Chromosome]:
+    """
+    Crossover Operator.
+    Performs Single Point Crossover. This crossover cuts the
+    chromossomes in a certain time point. It may cut notes 'in half'.
+    """
     k = max(2, N//5)
     other_chromosome = tournament(population_fitness, k)
     
@@ -474,6 +591,10 @@ def crossover(
 
 
 def get_cutpoint(chromosome: Chromosome) -> int:
+    """
+    Given a 'chromosome', randomly selects a time point in which 
+    the chromosome will be splitten.
+    """
     _, _, notes = split_chromosome(chromosome)
     duration = sum( note[0] for note in notes )
     
@@ -485,6 +606,10 @@ def cut_chromosome(
     chromosome: Chromosome,
     k: int
 ) -> tuple[Chromosome, Chromosome]:
+    """
+    Given a 'chromosome' and a time point, splits the chromosome
+    in two parts. One before 'k' and another after 'k'.
+    """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     
     cum_time=0
@@ -519,7 +644,10 @@ def merge_chromosomes(
     left: Chromosome, 
     right: Chromosome 
 ) -> Chromosome:
-
+    """
+    Given two cromossomes joins them.
+    The notes are concatenated. The probabilities are averaged.
+    """
     prob_op_left, prob_mut_left, notes_left = split_chromosome(left)
     prob_op_right, prob_mut_right, notes_right = split_chromosome(right)
     
@@ -542,6 +670,10 @@ def merge_chromosomes(
 
 
 def duplication(chromosome: Chromosome, *args) -> list[Chromosome]:
+    """
+    Given a 'chromosome', randomly selects an interval in the 
+    list of notes. That interval is duplicated.
+    """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     
     i = random.choice( range(len(notes)-1) )
@@ -565,6 +697,10 @@ def duplication(chromosome: Chromosome, *args) -> list[Chromosome]:
 ##########################################################
 
 def inversion(chromosome: Chromosome, *args) -> list[Chromosome]:
+    """
+    Given a 'chromosome', randomly selects an interval in the
+    list of notes. That interval is reversed.
+    """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     
     i = random.choice( range(len(notes) - 1) )
