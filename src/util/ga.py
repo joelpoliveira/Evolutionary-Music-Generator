@@ -5,12 +5,18 @@ from io import BytesIO
 from midi2audio import FluidSynth
 from numpy.typing import ArrayLike
 from midiutil.MidiFile import MIDIFile
-from typing import NewType, Union, Callable
+from typing import NewType, Union, Callable, Tuple
 
 Note = NewType("Note", int)
 Duration = NewType("Duration", int)
 Chromosome = NewType("Chromosome", list[ 
-    Union[ArrayLike[float], tuple[Note, Duration]]
+    Union[ 
+        ArrayLike, 
+        Tuple[ 
+            Duration, 
+            Note
+        ]
+    ]
 ])
 Population = NewType("Population", list[Chromosome])
 Fitness = NewType("Fitness", float)
@@ -21,6 +27,13 @@ class Generator:
     Class Generator - Main class to access methods 
                         for generation of chromosomes 
                         or the corresponding phenotype
+
+    Parameters: min_note -> Integer MIDI value for the lowest possible note. 
+                            Kept as the attribute "_MIN_NOTE".
+                max_note -> Integer MIDI value for the highest possible note
+                            Kept as the attribute "_MAX_NOTE".
+                n_starting_notes -> Number of notes to be generated.
+                                    Kept as attribute "N".
     """
     def __init__(self, 
                 min_note: int = 60,
@@ -32,6 +45,9 @@ class Generator:
         self._N = n_starting_notes
     
     def generate_random_pitch(self) -> Note:
+        """
+        
+        """
         pitch_base = list(
                 range(self._MIN_NOTE, self._MAX_NOTE, 12)
             )
