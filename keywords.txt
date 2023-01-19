@@ -1,0 +1,27 @@
+MUSIC ELEMENTS/FEATURES/Keywords:
+	- Scale
+	- Chord / Chord Progression
+	- Arpeggio
+	- Bassline
+	- Melody
+	- Texture
+	- Pitch
+	- Duration ---->  "Duration is the length of time a pitch, or tone, is sounded."
+	- Loudness
+	- Timbre
+	- Tempo ---> Speed of a given piece (BPM) (can vary)
+	- Rhythm
+	- Form
+	- Fundamental Frequency
+	
+Music Definition--> Combination of Harmony, Form, Melody, Rhythm
+
+[ Musical Composition ] VS [ Musical Improvisation ]
+	
+MOST RELEVANT:
+	
+-----------------------------
+------------------------------
+---------------------------------
+
+Melody is a sequence of tones in major or minor scale that is divided into smaller structures (phrase, sentence, chain
