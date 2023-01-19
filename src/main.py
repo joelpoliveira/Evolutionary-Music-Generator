@@ -1,14 +1,14 @@
 import os
-from typing import Type
-from scipy.io import wavfile
-from midi2audio import FluidSynth
-from midiutil import MIDIFile
-from io import BytesIO
-from util.features import get_feature_vector
-from util.ga import *
-import sounddevice as sd
+import click
 import librosa
+import sounddevice as sd
+
+from util.ga import *
 from threading import Thread
+from midiutil import MIDIFile
+from pyo import Server, SfPlayer
+from midi2audio import FluidSynth
+from util.features import get_feature_vector
 
 FONT = "./soundfonts/piano_eletro.sf2"
 MIDI_FILE = "./input/"
@@ -91,9 +91,12 @@ def chromossome_to_melody(chromosome: Chromosome, file_name: str) -> MIDIFile:
 
 def fitness_fun(melody_file_name: str) -> Fitness:
     
-    play_melody_detached(melody_file_name)
+    server = Server(audio="offline_nb").boot()
+    server.start()
+    SfPlayer( get_wav(melody_file_name), speed=1, loop=True).out()
     rating = input("Rating (0-5)")
-    sd.stop()
+    server.stop()
+    server.shutdown()
     try:
         rating = int(rating)
     except ValueError:
@@ -101,11 +104,6 @@ def fitness_fun(melody_file_name: str) -> Fitness:
 
     return rating
 
-def play_melody_detached(file_name):
-    sr=44100
-    song, fs = librosa.load( get_wav(file_name) , sr=sr)
-
-    Thread( target = play_melody, args=(song, fs)).start()
 
 def play_melody(song, fs):
     sd.play(song, fs, loop=True)
@@ -132,16 +130,16 @@ def main(population_size: int):
             chromosome = gen.generate_random_chromosome()
             population.append(chromosome)
 
-            #play and get fitness5
+            #play and get fitness
             chromossome_label = FILE_BASE_NAME + f"-{i}"
-            midi = chromossome_to_melody(chromosome, chromossome_label)
-            print(midi)
+            chromossome_to_melody(chromosome, chromossome_label)
+
             fitness = fitness_fun(chromossome_label)
             population_fitness.append((chromosome, fitness))
             sum_fitness_gen += fitness
 
-        print(population_fitness)
-        print(sum_fitness_gen/population_size)
+        #print(population_fitness)
+        #print(sum_fitness_gen/population_size)
         gen_avgFitness.append(sum_fitness_gen/population_size)
 
         running = input("Continue to next gen? [Y/n]") != "n"
