@@ -278,7 +278,7 @@ def repeat(chromosome: Chromosome) -> Chromosome:
     with the same duration.
     """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
-    n = random.choice(range(len(notes)))
+    n = choice(range(len(notes)))
     
     notes.insert(n, notes[n])
     chromosome = [prob_op, prob_mut, *notes]
@@ -292,7 +292,7 @@ def split(chromosome: Chromosome) -> Chromosome:
     equal notes (each with half the duration of the original).
     """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
-    n = random.choice(range(len(notes)))
+    n = choice(range(len(notes)))
     
     duration, note = notes[n]
     new_duration = duration/2
@@ -316,10 +316,10 @@ def arpeggiate(chromosome: Chromosome, generator: Generator) -> Chromosome:
     Pitch is the numerical value of the note.
     """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
-    n = random.choice(range(len(notes)))
+    n = choice(range(len(notes)))
     
     duration, note = notes[n]
-    pitch_incr = random.choice([4,7])
+    pitch_incr = choice([4,7])
     
     new_pitch = min(generator._MAX_NOTE, note+pitch_incr)
     new_note = (duration, new_pitch)
@@ -340,7 +340,7 @@ def leap(
     note in the respective range (MIN_NOTE, MAX_NOTE).
     """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
-    n = random.choice(range(len(notes)))
+    n = choice(range(len(notes)))
     
     duration, note = notes[n]
     while (new := generator.generate_random_note())==note: continue
@@ -392,7 +392,7 @@ def upper_neighbor(
     if len(is_consecutive)==0:
         return chromosome
     
-    n = random.choice(is_consecutive)
+    n = choice(is_consecutive)
     d, note = notes[n]
     
     step = diatonic_upper_step_size(note)
@@ -428,7 +428,7 @@ def lower_neighbor(
     if len(is_consecutive)==0:
         return chromosome
     
-    n = random.choice(is_consecutive)
+    n = choice(is_consecutive)
     d, note = notes[n]
     
     step = diatonic_lower_step_size(note)
@@ -446,7 +446,7 @@ def anticipation(chromosome: Chromosome) -> Chromosome:
     The duration of the first is shorter than the second by the ratio 1:3.
     """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
-    n = random.choice(range(len(notes)))
+    n = choice(range(len(notes)))
     
     duration, note = notes[n]
     
@@ -464,7 +464,7 @@ def delay(chromosome: Chromosome) -> Chromosome:
     The duration of the first is longer than the second by the ratio 3:1.
     """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
-    n = random.choice(range(len(notes)))
+    n = choice(range(len(notes)))
     
     duration, note = notes[n]
     
@@ -486,7 +486,7 @@ def passing_tone(chromosome: Chromosome) -> Chromosome:
     If the first note is lower than the second - Upward scalar motion.
     """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
-    n = random.choice( range( len( notes ) - 1 ) )
+    n = choice( range( len( notes ) - 1 ) )
     
     d, note = notes[n]
     d_b, note_b = notes[n+1]
@@ -517,7 +517,7 @@ def delete_note(chromosome: Chromosome) -> Chromosome:
     Randomly Selects a note. That note is deleted.
     """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
-    n = random.choice(range(len(notes)))
+    n = choice(range(len(notes)))
     
     notes = notes.copy()
     notes.pop(n)
@@ -539,7 +539,7 @@ def merge_note(chromosome):
     if len(is_consecutive)==0: 
         return chromosome
     
-    n = random.choice(is_consecutive)
+    n = choice(is_consecutive)
     d_a, note_a = notes[n-1]
     d_b, _ = notes[n]
     
@@ -596,7 +596,7 @@ def get_cutpoint(chromosome: Chromosome) -> int:
     _, _, notes = split_chromosome(chromosome)
     duration = sum( note[0] for note in notes )
     
-    point = random.choice(range(1, duration))
+    point = choice(range(1, duration))
     return point
 
 
@@ -674,8 +674,8 @@ def duplication(chromosome: Chromosome, *args) -> list[Chromosome]:
     """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     
-    i = random.choice( range(len(notes)-1) )
-    j = random.choice( range(1,8+1) )
+    i = choice( range(len(notes)-1) )
+    j = choice( range(1,8+1) )
         
     to_duplicate = notes[i : i+j]
     left = notes[ :i ]
@@ -701,8 +701,8 @@ def inversion(chromosome: Chromosome, *args) -> list[Chromosome]:
     """
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     
-    i = random.choice( range(len(notes) - 1) )
-    j = random.choice( range(i+1, len(notes) ) )
+    i = choice( range(len(notes) - 1) )
+    j = choice( range(i+1, len(notes) ) )
                       
     to_reverse = notes[i : j]
     left = notes[:i]
