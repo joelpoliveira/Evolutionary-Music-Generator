@@ -83,15 +83,12 @@ def chromosome_to_melody(chromosome: Chromosome, file_name: str) -> MIDIFile:
     midi_file = MIDIFile(1, deinterleave=False)
     melody = 0
 
-    tempo=120
-    volume=100
+    _, _, tempo, notes = split_chromosome(chromosome)
     midi_file.addTempo(1, 0, tempo)
-
-    _, _, notes = split_chromosome(chromosome)
 
     cumulative_time = 0
     for element in notes:
-        duration, note = element
+        duration, volume, note = element
         midi_file.addNote(
             track = melody, 
             channel = 0, 
