@@ -44,11 +44,16 @@ def flush():
     for file in os.listdir(WAV_FILE):
         os.remove(WAV_FILE + file)
 
-def save_data(df: pd.DataFrame):
+def save_data(df: pd.DataFrame, best_individuals: list[Chromosome]):
     folder = "./data/" + datetime.now().strftime("%d-%m-%Y %H-%M-%S")
     os.makedirs(folder)
 
     df.to_csv(folder + "/statistics.csv", index=True, index_label="Generation_ID")
+
+    best_individuals_lines = list(map(lambda c: str(c).replace("\n", " "), best_individuals))
+    with open(folder + "/individuals.txt", "w") as out:
+        out.writelines(best_individuals_lines)
+        out.close()
 
 
 def get_midi(fl_name: str)-> str:
@@ -106,14 +111,6 @@ def chromosome_to_melody(chromosome: Chromosome, file_name: str) -> MIDIFile:
 
 fitness: Callable
 
-
-# notes = np.ravel(list(
-#             map(lambda note: note[1], map(
-#                     lambda c: c[2:], population
-#                 )
-#             )
-#         ))
-#         print(np.any(  (notes>127) ))
 @click.command()
 @click.option("--population-size", default=100, prompt='Population size:', type=int)
 @click.option("--min-note", default=60, prompt='Lower MIDI possible value:', type=int)
@@ -145,6 +142,7 @@ def main(
         fitness = lambda file_name: cosine_similarity( file_name, song_feat )
 
     population_gen = 0
+    best_individuals = []
 
     #generate initial population
     gen = Generator(min_note, max_note, n_start)
@@ -163,35 +161,33 @@ def main(
 
     while population_gen < n_gen: 
         print(f"Currently Processing Generation  {population_gen}")
-        #generate respective file names
-        file_names = [ FILE_BASE_NAME + f"{i}" for i in range(population_size)]
         
+        population_fitness = []
+        fitness_values = []
+        oper_probs = []
+        mut_probs = []
+        for i, chromosome in enumerate(population):
+            file_name = FILE_BASE_NAME + f"{i}"
+            chromosome_to_melody(chromosome, file_name)
+            current_fitness = fitness(file_name)
+            fitness_values.append(current_fitness)
+            population_fitness.append((chromosome, current_fitness))
+            oper_probs.append(chromosome[0])
+            mut_probs.append(chromosome[1])
         
-        #generate wav_files (nested loop is faster)
-        print("\tGenerating Melodies")
-        [ chromosome_to_melody(chromosome, fl) for chromosome, fl in zip(population, file_names) ]
-        
-        
-        #calculate fitness for each chromosome
-        print("\tCalculating Fitness")
-        population_fitness = list(
-                    map(lambda chromosome, file_name: (chromosome, fitness(file_name) ), population, file_names)
-                )
-        
-        #generate statistics regarding fitness
-        fitness_values = list(map(lambda pair: pair[1], population_fitness))
+        #select best chromosome
+        best_index = np.argmax(fitness_values)
+        best_chromosome = population[best_index]
+        best_individuals.append(best_chromosome)
+
+        #get fitness statistics
         max_fitness = np.max(fitness_values)
         avg_fitness = np.mean(fitness_values)
         std_fitness = np.std(fitness_values)
 
-        #generate statistics regarding probabilities
-        oper_probs=list(map(lambda c: c[0], population))
+        #get probabilities statistics
         mean_oper_probs = np.mean(oper_probs, axis=0)
         std_oper_probs = np.std(oper_probs, axis=0)
-
-        mut_probs = list(map(lambda c: c[1], population))
-        mean_mut_probs = np.mean(mut_probs, axis=0)
-        std_mut_probs = np.std(mut_probs, axis=0)
         
         population_gen += 1
         statistics.loc[population_gen] = {
@@ -207,12 +203,12 @@ def main(
             "Inversion_mean" : mean_oper_probs[3],
             "Inversion_std": std_oper_probs[3]
         }
-        print(f"\t Best fitness obtained: {max_fitness}")
-
+        print(f"\t Best fitness obtained: {fitness_values[best_index]}")
+        
         #create the new generation
         population = selection(population_fitness, gen, population_size)
-
-    save_data(statistics)
+        print(f"\tTime Taken = {time()-s}")
+    save_data(statistics, best_individuals)
     flush()
 if __name__ == '__main__':
     main()
