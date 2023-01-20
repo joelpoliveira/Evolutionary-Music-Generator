@@ -1,10 +1,7 @@
 import numpy as np
 
 from random import *
-from io import BytesIO
-from midi2audio import FluidSynth
 from numpy.typing import ArrayLike
-from midiutil.MidiFile import MIDIFile
 from typing import NewType, Union, Callable, Tuple
 
 Note = NewType("Note", int)
@@ -83,43 +80,7 @@ class Generator:
             melody_note = self.generate_random_note()
             chromosome.append( (duration, melody_note) )
         return chromosome
-    
-# def chromossome_to_melody(chromosome: Chromosome, file_name: str) -> MIDIFile:
-#     midi_file = MIDIFile(1)
-#     melody = 0
 
-#     tempo=120
-#     volume=100
-#     midi_file.addTempo(1, 0, tempo)
-
-#     _, _, notes = split_chromosome(chromosome)
-
-#     cumulative_time = 0
-#     for element in notes:
-#         duration, note = element
-#         midi_file.addNote(
-#             melody, 
-#             0, 
-#             note, 
-#             cumulative_time, 
-#             duration/2, 
-#             volume
-#         )
-
-#         cumulative_time+=duration/2
-#     #save_melody(chromosome, file_name)
-#     return midi_file
-
-# def save_melody(midi : MIDIFile, file_name: str):
-#     with open(file_name + "mid", "wb") as output_file:
-#        midi.writeFile(output_file)
-#        output_file.close()
-
-#     song = BytesIO()
-#     midi.writeFile(song)
-#     FluidSynth(
-#         sound_font=FONT
-#     ).midi_to_audio(file_name+".mid", file_name + ".wav")
 
 def split_chromosome(chromosome):
     """

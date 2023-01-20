@@ -42,39 +42,39 @@ def get_statistics(signal: ArrayLike) -> tuple:
         get_kurtosis(signal)
     )
 
-def extract_statistics(signal: ArrayLike, axis=1):
+def extract_statistics(signal: ArrayLike, axis=1) -> ArrayLike:
     return np.apply_along_axis(get_statistics, axis, signal).flatten()
 
-def mel_freq_cepstrum_coef(signal : ArrayLike):
-    return librosa.feature.mfcc(y=signal, n_mfcc=13)
+def mel_freq_cepstrum_coef(signal : ArrayLike, n_mfcc=13) -> ArrayLike:
+    return librosa.feature.mfcc(y=signal, n_mfcc=n_mfcc)
 
-def spectral_centroid(signal : ArrayLike):
+def spectral_centroid(signal : ArrayLike) -> ArrayLike:
     return librosa.feature.spectral_centroid(y=signal)
 
-def spectral_bandwith(signal : ArrayLike):
+def spectral_bandwith(signal : ArrayLike) -> ArrayLike:
     return librosa.feature.spectral_bandwidth(y=signal)
 
-def spectral_contrast(signal : ArrayLike):
+def spectral_contrast(signal : ArrayLike) -> ArrayLike:
     return librosa.feature.spectral_contrast(y=signal)
 
-def spectral_flatness(signal : ArrayLike):
+def spectral_flatness(signal : ArrayLike) -> ArrayLike:
     return librosa.feature.spectral_flatness(y=signal)
 
-def spectral_rollof(signal : ArrayLike):
+def spectral_rollof(signal : ArrayLike) -> ArrayLike:
     return librosa.feature.spectral_rolloff(y=signal)
 
-def fundamental_frequency(signal : ArrayLike):
+def fundamental_frequency(signal : ArrayLike) -> ArrayLike:
     f0 = librosa.yin(signal, fmin=20, fmax=11025)
     f0[f0==11025] = 0
     return f0
 
-def root_mean_square(signal: ArrayLike):
+def root_mean_square(signal: ArrayLike) -> ArrayLike:
     return librosa.feature.rms(y=signal)
 
-def zero_crossing_rate(signal: ArrayLike):
+def zero_crossing_rate(signal: ArrayLike) -> ArrayLike:
     return librosa.feature.zero_crossing_rate(y=signal)
 
-def get_tempo(signal: ArrayLike):
+def get_tempo(signal: ArrayLike) -> ArrayLike:
     return librosa.beat.tempo(y=signal)
 
 def get_feature_vector(signal: ArrayLike) -> ArrayLike:
