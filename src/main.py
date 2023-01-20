@@ -10,8 +10,8 @@ from midi2audio import FluidSynth
 from util.features import get_feature_vector
 
 FONT = "./soundfonts/piano_eletro.sf2"
-MIDI_FILE = "./input/"
-WAV_FILE = "./output/"
+MIDI_FILE = "./midi_files/"
+WAV_FILE = "./wav_files/"
 FILE_BASE_NAME = "ga-melody"
 
 
