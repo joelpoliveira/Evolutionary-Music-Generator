@@ -1,4 +1,4 @@
 .ipynb_checkpoints/*
-src/input/*
-src/output/*
+src/midi_files/*
+src/wav_files/*
 **/src/util/__pycache__
