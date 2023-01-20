@@ -6,7 +6,6 @@ import sounddevice as sd
 from util.ga import *
 from threading import Thread
 from midiutil import MIDIFile
-from pyo import Server, SfPlayer
 from midi2audio import FluidSynth
 from util.features import get_feature_vector
 
@@ -30,21 +29,6 @@ def play(file=None, sr=44100):
 
 def rand(low=0, high=2):
     return random.random()*(high - low + 1) + low
-
-
-def save_harmony(midi_file, out):
-    with open(MIDI_FILE + out + ".midi", "wb") as output_file:
-        midi_file.writeFile(output_file)
-        output_file.close()
-    
-    song = BytesIO()
-    wav_song = BytesIO()
-    
-    midi_file.writeFile(song)
-
-    FluidSynth(
-            sound_font=FONT
-        ).midi_to_audio(MIDI_FILE + out + ".midi", WAV_FILE + out + ".wav")   
 
  """
 
@@ -91,12 +75,10 @@ def chromossome_to_melody(chromosome: Chromosome, file_name: str) -> MIDIFile:
 
 def fitness_fun(melody_file_name: str) -> Fitness:
     
-    server = Server(audio="offline_nb").boot()
-    server.start()
-    SfPlayer( get_wav(melody_file_name), speed=1, loop=True).out()
+    play_melody_detached(melody_file_name)
     rating = input("Rating (0-5)")
-    server.stop()
-    server.shutdown()
+    sd.stop()
+    
     try:
         rating = int(rating)
     except ValueError:
@@ -104,6 +86,9 @@ def fitness_fun(melody_file_name: str) -> Fitness:
 
     return rating
 
+def play_melody_detached(file_name):
+    song, fs = librosa.load(get_wav(file_name), sr = 44100)
+    Thread( target=play_melody, args=(song, fs), daemon=True ).start()
 
 def play_melody(song, fs):
     sd.play(song, fs, loop=True)
