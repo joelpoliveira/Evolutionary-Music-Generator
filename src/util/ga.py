@@ -1,5 +1,5 @@
 import numpy as np
-
+from time import time
 from random import *
 from numpy.typing import ArrayLike
 from typing import NewType, Union, Callable, Tuple
@@ -266,9 +266,9 @@ def split(chromosome: Chromosome, **kwargs) -> Chromosome:
     duration, volume, note = notes[n]
     new_duration = duration/2
     
-    new_note = (new_duration, note)
+    new_note = (new_duration, volume, note)
     notes[n] = new_note
-    notes.insert(n, volume, new_note)
+    notes.insert(n, new_note)
     
     chromosome = [prob_op, prob_mut, tempo, *notes]
     return chromosome
@@ -294,7 +294,7 @@ def arpeggiate(chromosome: Chromosome, **kwargs) -> Chromosome:
     new_pitch = min(generator._MAX_NOTE, note+pitch_incr)
     new_note = (duration, volume, new_pitch)
     
-    notes.insert(n+1, volume, new_note)
+    notes.insert(n+1, new_note)
     
     chromosome = [prob_op, prob_mut, tempo, *notes]
     return chromosome
@@ -523,7 +523,7 @@ def merge_note(chromosome, **kwargs):
     d_b, volume_b, _ = notes[n]
     
     d = min(8, d_a + d_b)
-    v = (volume_a + volume_b) / 2
+    v = int((volume_a + volume_b) / 2)
     new = (d, v, note_a)
     
     notes[n-1] = new
@@ -595,8 +595,8 @@ def cut_chromosome(
         d, volume, note = notes[i]
         
         if cum_time == k:
-            chromosome_left = [prob_op, prob_mut, *notes[:i]]
-            chromosome_right = [prob_op, prob_mut, *notes[i:]]
+            chromosome_left = [prob_op, prob_mut, tempo, *notes[:i]]
+            chromosome_right = [prob_op, prob_mut, tempo, *notes[i:]]
             
             return chromosome_left, chromosome_right
         
