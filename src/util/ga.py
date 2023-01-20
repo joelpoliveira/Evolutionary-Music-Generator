@@ -138,7 +138,11 @@ def elitism(
     return list(map(lambda x: x[0], new_population))
 
 
-def selection(population_fitness: Population_Fitness) -> Population:
+def selection(
+    population_fitness: Population_Fitness, 
+    generator: Generator,
+    N: int
+) -> Population:
     """
     Given a list of pairs (chromossome, fitness), the selection method creates
     the new generation. Keeps best elements with 'Elitism' and generates new 
@@ -149,10 +153,6 @@ def selection(population_fitness: Population_Fitness) -> Population:
         4. Inversion
     Each operator as a probability of being selected.  
     """
-    N = len(population_fitness)
-
-    #TODO calculate fitness in main
-    # population_fitness = list(map(lambda gen: (gen, fitness(gen)), population))
 
     population_fitness.sort(key = lambda x: x[1])
     population_fitness = truncate(population_fitness, N)
@@ -163,7 +163,7 @@ def selection(population_fitness: Population_Fitness) -> Population:
         chromosome = tournament(population_fitness, 2)
         
         operator = select_operator(chromosome, k_left)
-        new_chromosomes = operator(chromosome, population_fitness, N) 
+        new_chromosomes = operator(chromosome, population_fitness, N, generator=generator) 
 
         new_population += new_chromosomes
         k_left-=len(new_chromosomes) 
@@ -207,7 +207,7 @@ def select_operator(
 
 
 
-def mutation(chromosome: Chromosome, *args) -> list[Chromosome]:
+def mutation(chromosome: Chromosome, *args, **kwargs) -> list[Chromosome]:
     """
     Mutation Operator. 
     Given the 'Mutation Probabilities' of the Chromossome,a mutation 
@@ -228,11 +228,11 @@ def mutation(chromosome: Chromosome, *args) -> list[Chromosome]:
         p=prob_mut
     )[0]
 
-    chromosome = rule(chromosome)
+    chromosome = rule(chromosome, **kwargs)
     return [chromosome]
 
 
-def repeat(chromosome: Chromosome) -> Chromosome:
+def repeat(chromosome: Chromosome, **kwargs) -> Chromosome:
     """
     Repeat Mutation Rule. 
     Randomly selects a note. That note is repeated 
@@ -246,7 +246,7 @@ def repeat(chromosome: Chromosome) -> Chromosome:
     return chromosome
 
 
-def split(chromosome: Chromosome) -> Chromosome:
+def split(chromosome: Chromosome, **kwargs) -> Chromosome:
     """
     Split Mutation Rule.
     Randomly selects a note. That note is split in two
@@ -266,7 +266,7 @@ def split(chromosome: Chromosome) -> Chromosome:
     return chromosome
 
 
-def arpeggiate(chromosome: Chromosome, generator: Generator) -> Chromosome:
+def arpeggiate(chromosome: Chromosome, **kwargs) -> Chromosome:
     """
     Arpeggiate Mutation Rule.
     Randomly selects a note. That note is split in two notes
@@ -276,6 +276,7 @@ def arpeggiate(chromosome: Chromosome, generator: Generator) -> Chromosome:
     of the original pitch.
     Pitch is the numerical value of the note.
     """
+    generator = kwargs["generator"]
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     n = choice(range(len(notes)))
     
@@ -293,13 +294,14 @@ def arpeggiate(chromosome: Chromosome, generator: Generator) -> Chromosome:
 
 def leap(
     chromosome: Chromosome, 
-    generator: Generator
+    **kwargs
 ) -> Chromosome:
     """
     Leap Mutation Rule.
     Randomly Selects a note. That note pitch is swaped to another
     note in the respective range (MIN_NOTE, MAX_NOTE).
     """
+    generator = kwargs["generator"]
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     n = choice(range(len(notes)))
     
@@ -339,14 +341,14 @@ def diatonic_upper_step_size(note: Note) -> int:
 
 
 def upper_neighbor(
-    chromosome: Chromosome, 
-    generator: Generator
+    chromosome: Chromosome, **kwargs
 ) -> Chromosome:
     """
     Upper Neighbor Mutation Rule.
     Randomly selects a position where the same note is sequentially repeated.
     The second note is transposed to one diatonic scale step above itself.
     """
+    generator = kwargs["generator"]
     prob_op, prob_mut, notes = split_chromosome(chromosome)
     
     is_consecutive = get_pairs(notes)
@@ -375,14 +377,14 @@ def diatonic_lower_step_size(note: Note) -> int:
 
 
 def lower_neighbor(
-    chromosome: Chromosome,
-    generator: Generator
+    chromosome: Chromosome, **kwargs
 ) -> Chromosome:
     """
     Lower Neighbor Mutation Rule.
     Randomly selects a position where the same note is sequentially repeated.
     The second note is transposed to one diatonic scale step below itself.
     """
+    generator = kwargs["generator"]
     prob_op, prob_mut, notes = split_chromosome(chromosome)
 
     is_consecutive = get_pairs(notes)
@@ -400,7 +402,7 @@ def lower_neighbor(
     return chromosome
 
 
-def anticipation(chromosome: Chromosome) -> Chromosome:
+def anticipation(chromosome: Chromosome, **kwargs) -> Chromosome:
     """
     Anticipation Mutation Rule.
     Randomly Selects a note. That note is split into two notes.
@@ -418,7 +420,7 @@ def anticipation(chromosome: Chromosome) -> Chromosome:
     return chromosome
 
 
-def delay(chromosome: Chromosome) -> Chromosome:
+def delay(chromosome: Chromosome, **kwargs) -> Chromosome:
     """
     Delay Mutation Rule.
     Randomly Selects a note. That note is split into two notes.
@@ -436,7 +438,7 @@ def delay(chromosome: Chromosome) -> Chromosome:
     return chromosome
 
 
-def passing_tone(chromosome: Chromosome) -> Chromosome:
+def passing_tone(chromosome: Chromosome, **kwargs) -> Chromosome:
     """
     Passing Tone Mutation Rule.
     Randomly selects a pair of consecutive notes.
@@ -472,7 +474,7 @@ def passing_tone(chromosome: Chromosome) -> Chromosome:
     return chromosome   
 
 
-def delete_note(chromosome: Chromosome) -> Chromosome:
+def delete_note(chromosome: Chromosome, **kwargs) -> Chromosome:
     """
     Delete Mutation Rule.
     Randomly Selects a note. That note is deleted.
@@ -487,7 +489,7 @@ def delete_note(chromosome: Chromosome) -> Chromosome:
     return chromosome
 
 
-def merge_note(chromosome):
+def merge_note(chromosome, **kwargs):
     """
     Merge Note Mutation Rule.
     Randomly selects a position where the same note is sequentially repeated.
@@ -527,7 +529,7 @@ def merge_note(chromosome):
 def crossover(
     chromosome: Chromosome,
     population_fitness: Population_Fitness,
-    N: int 
+    N: int, **kwargs
 ) -> list[Chromosome]:
     """
     Crossover Operator.
@@ -628,7 +630,7 @@ def merge_chromosomes(
 ############################################################
 
 
-def duplication(chromosome: Chromosome, *args) -> list[Chromosome]:
+def duplication(chromosome: Chromosome, *args, **kwargs) -> list[Chromosome]:
     """
     Given a 'chromosome', randomly selects an interval in the 
     list of notes. That interval is duplicated.
@@ -655,7 +657,7 @@ def duplication(chromosome: Chromosome, *args) -> list[Chromosome]:
 ##########################################################
 ##########################################################
 
-def inversion(chromosome: Chromosome, *args) -> list[Chromosome]:
+def inversion(chromosome: Chromosome, *args, **kwargs) -> list[Chromosome]:
     """
     Given a 'chromosome', randomly selects an interval in the
     list of notes. That interval is reversed.
