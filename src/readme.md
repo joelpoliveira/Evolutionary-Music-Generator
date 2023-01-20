@@ -33,6 +33,11 @@ The packages 'librosa' and 'midi2audio' use programs that need to be installed i
 'midi2audio' uses Fluidsynth in order to convert MIDI files into WAV files. 
 It can be downloaded from the console. The instructions are in their [official github repository](https://github.com/FluidSynth/fluidsynth/wiki/Download).
 
+'librosa' uses FFmpeg to load audio files.
+It can be downloaded from their [official site](https://ffmpeg.org/download.html).
+
+Both programs bin folders need to be added to PATH.
+
 # Execute program
 
 In the 'src' folder simply run 'main.py':
