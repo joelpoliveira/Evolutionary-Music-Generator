@@ -2,4 +2,6 @@ midiutil
 midi2audio
 librosa
 scipy
-pydub
+click
+pandas
+sounddevice

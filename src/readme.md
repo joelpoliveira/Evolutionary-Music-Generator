@@ -33,6 +33,8 @@ The packages 'librosa' and 'midi2audio' use programs that need to be installed i
 'midi2audio' uses Fluidsynth in order to convert MIDI files into WAV files. 
 It can be downloaded from the console. The instructions are in their [official github repository](https://github.com/FluidSynth/fluidsynth/wiki/Download).
 
+Note the function used (midi_to_audio) to convert MIDI files to WAV files will direct it's output to the console buffer. If this is not wanted, the parameter "stdout=subprocess.DEVNULL" can be added to the source code.
+
 'librosa' uses FFmpeg to load audio files.
 It can be downloaded from their [official site](https://ffmpeg.org/download.html).
 
