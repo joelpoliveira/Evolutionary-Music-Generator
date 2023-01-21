@@ -70,26 +70,31 @@ def save_melody(midi : MIDIFile, file_name: str):
 
 
 def chromosome_to_melody(chromosome: Chromosome, file_name: str) -> MIDIFile:
-    midi_file = MIDIFile(1, deinterleave=False)
-    melody = 0
+    _, _, tempo, lines = split_lines(chromosome)
 
-    _, _, tempo, notes = split_chromosome(chromosome)
-    midi_file.addTempo(1, 0, tempo)
+    midi_file = MIDIFile(
+        len(lines), 
+        deinterleave=False, 
+        adjust_origin=True,
+        removeDuplicates=False)
+    
+    for track, notes in enumerate(lines):
+        midi_file.addTempo(track, 0, tempo)
+        cumulative_time = 0
 
-    cumulative_time = 0
-    for element in notes:
-        duration, volume, note = element
-        midi_file.addNote(
-            track = melody, 
-            channel = 0, 
-            pitch = note, 
-            time = cumulative_time, 
-            duration=duration/2, 
-            volume=volume
-        )
-
-        cumulative_time+=duration/2
-    save_melody(midi_file, file_name)
+        for element in notes:
+            duration, volume, note = element
+            midi_file.addNote(
+                track = track, 
+                channel = 0, 
+                pitch = note, 
+                time = cumulative_time, 
+                duration=duration/2, 
+                volume=volume,
+            )
+            cumulative_time+=duration/2
+    if save_melody(midi_file, file_name) == 0:
+        print(chromosome[2:])
     return midi_file
 
 
@@ -114,20 +119,22 @@ def fitness(melody_file_name: str) -> Fitness:
 
 @click.command()
 @click.option("--population-size", default=10, prompt='Population size:', type=int)
-@click.option("--min-note", default=60, prompt='Lower MIDI possible value:', type=int)
-@click.option("--max-note", default=81, prompt='Higher MIDI possible value:', type=int)
+@click.option("--min-note", default=36, prompt='Lower MIDI possible value:', type=int)
+@click.option("--max-note", default=93, prompt='Higher MIDI possible value:', type=int)
 @click.option("--n-start", default=5, prompt="Number of starting notes", type=int)
+@click.option("--n-lines", default=2, prompt="Number of lines", type=int)
 def main(
     population_size: int,
     min_note: int,
     max_note: int,
-    n_start: int):
+    n_start: int,
+    n_lines: int):
     
     running = True
     population_gen = 0
     best_individuals = []
     #generate initial population
-    gen = Generator(min_note, max_note, n_start)
+    gen = Generator(min_note, max_note, n_start, n_lines)
     population = [ gen.generate_random_chromosome() for _ in range(population_size) ]
 
     #avg fitness of each generation, statistics
@@ -149,7 +156,7 @@ def main(
         mut_probs = []
 
         for i, chromosome in enumerate(population):
-            file_name = FILE_BASE_NAME + f"{i}"
+            file_name = FILE_BASE_NAME + f"-{i}"
             chromosome_to_melody(chromosome, file_name)
             current_fitness = fitness(file_name)
             fitness_values.append(current_fitness)
